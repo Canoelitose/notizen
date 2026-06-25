@@ -200,6 +200,39 @@ install_proxmox_db() {
   DB_CTID="$ctid" DB_IP="$ip" bash deploy/db-lxc.sh
 }
 
+# ── PROXMOX: verschlüsselte Backups einrichten ───────────────────────────────
+install_backup() {
+  have pct || die "Auf dem Proxmox-Host ausführen (pct fehlt)."
+  ensure_repo
+  cd "$INSTALL_DIR"
+
+  say "Verschlüsselte Backups einrichten (täglich, AES-256, auf den NAS)"
+  local ctid dir pass keep
+  ctid="$(ask 'Container-ID der Datenbank' '108')"
+  dir="$(ask 'Backup-Ordner (auf dem NAS)' '/mnt/pve/nas-proxmox/notizen-backups')"
+  echo "    WICHTIG: Die Backup-Passphrase brauchst du zum WIEDERHERSTELLEN."
+  echo "    Bewahre sie SICHER auf (Passwortmanager) — NICHT nur auf dem Server!"
+  pass="$(ask_secret 'Backup-Passphrase (Enter = zufällig)')"
+  if [ -z "$pass" ]; then pass="$(openssl rand -hex 24)"; warn "Generiert: $pass"; warn "-> JETZT sicher speichern!"; fi
+  keep="$(ask 'Wie viele Backups behalten?' '14')"
+
+  # Stabile Orte (überleben ein Löschen des Repo-Ordners)
+  mkdir -p /etc/notizen
+  printf '%s' "$pass" > /etc/notizen/backup.pass; chmod 600 /etc/notizen/backup.pass
+  install -m 755 deploy/backup-encrypted.sh /usr/local/sbin/notizen-backup.sh
+  cat > /etc/cron.d/notizen-backup <<CRON
+# Notizen: tägliches verschlüsseltes Backup um 03:30
+30 3 * * * root DB_CTID=$ctid BACKUP_DIR="$dir" KEEP=$keep PASS_FILE=/etc/notizen/backup.pass /usr/local/sbin/notizen-backup.sh >> /var/log/notizen-backup.log 2>&1
+CRON
+  ok "Cron eingerichtet: täglich 03:30 -> $dir"
+
+  say "Test-Backup jetzt ausführen …"
+  DB_CTID="$ctid" BACKUP_DIR="$dir" KEEP="$keep" PASS_FILE=/etc/notizen/backup.pass bash deploy/backup-encrypted.sh
+  echo
+  ok "Backups aktiv. Wiederherstellen: Anleitung oben in deploy/backup-encrypted.sh."
+  warn "Passphrase liegt in /etc/notizen/backup.pass — UNBEDINGT zusätzlich extern sichern!"
+}
+
 # ── Menü ─────────────────────────────────────────────────────────────────────
 main() {
   banner
@@ -209,6 +242,7 @@ main() {
     if have pct; then
       echo -e "      ${C_B}2)${C_0} Proxmox     — zwei LXC (App + DB) auf diesem Host"
       echo -e "      ${C_B}3)${C_0} Nur DB      — ein LXC nur mit PostgreSQL (für die Desktop-App)"
+      echo -e "      ${C_B}4)${C_0} Backups     — verschlüsselte tägliche Backups einrichten"
     fi
     echo
     local c; c="$(ask 'Auswahl' '1')"
@@ -216,6 +250,7 @@ main() {
       1) MODE=docker ;;
       2) MODE=proxmox ;;
       3) MODE=db ;;
+      4) MODE=backup ;;
       *) die "Ungültige Auswahl" ;;
     esac
   fi
@@ -223,7 +258,8 @@ main() {
     docker)  install_docker ;;
     proxmox) install_proxmox ;;
     db)      install_proxmox_db ;;
-    *) die "Unbekannter Modus '$MODE' (erlaubt: docker, proxmox, db)" ;;
+    backup)  install_backup ;;
+    *) die "Unbekannter Modus '$MODE' (erlaubt: docker, proxmox, db, backup)" ;;
   esac
 }
 
