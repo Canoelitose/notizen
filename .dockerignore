@@ -1,0 +1,21 @@
+# Kontext klein halten — wird im Build nicht gebraucht / wird neu erzeugt.
+**/node_modules
+.git
+.github
+.vscode
+desktop
+history
+*.md
+deploy/test
+
+# Secrets / lokale Laufzeitdaten
+*.env
+deploy/.env
+app/.env
+app/dev-data.json
+app/snapshots
+app/cache
+app/public/cache
+
+# dist wird im Build aus den .jsx neu kompiliert
+app/public/dist

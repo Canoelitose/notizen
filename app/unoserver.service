@@ -1,0 +1,18 @@
+[Unit]
+Description=LibreOffice unoserver (warm instance for fast office->pdf conversions)
+After=network.target
+
+[Service]
+Type=simple
+User=notesapp
+Group=notesapp
+Environment=HOME=/opt/notes-app/.unoserver
+ExecStartPre=/bin/mkdir -p /opt/notes-app/.unoserver
+ExecStart=/usr/local/bin/unoserver --interface 127.0.0.1 --port 2003 --uno-port 2002
+Restart=always
+RestartSec=3
+# Keep the warm LibreOffice instance from being OOM-killed before the app
+OOMScoreAdjust=-100
+
+[Install]
+WantedBy=multi-user.target

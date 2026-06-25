@@ -1,0 +1,87 @@
+# Notes-App — Docker-Variante.
+#
+#   1. cp .env.docker.example .env   &&  Werte ausfüllen (v.a. DB_PASS, ADMIN_*)
+#   2. docker compose up -d --build
+#   3. http://localhost:3000
+#
+# DB-Optionen:
+#   - Standard:        mitgelieferte PostgreSQL (Service "db").
+#   - Entfernte DB/IP: in .env DATABASE_URL=postgres://user:pass@HOST:5432/db setzen,
+#                      dann nur die App starten:  docker compose up -d app
+#   - DB per Tunnel:   Profil "tunnel-db" (siehe unten + deploy/db-tunnel/README.md).
+#   - App per Tunnel:  Profil "tunnel-web" (CLOUDFLARE_TUNNEL_TOKEN in .env).
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-notes_app}
+      POSTGRES_USER: ${DB_USER:-notes_app}
+      POSTGRES_PASSWORD: ${DB_PASS:?DB_PASS muss in .env gesetzt sein}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-notes_app} -d ${DB_NAME:-notes_app}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  app:
+    build:
+      context: .
+      args:
+        INCLUDE_OFFICE: ${INCLUDE_OFFICE:-false}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+        # required:false -> App startet auch ohne den db-Service (entfernte DB / Tunnel).
+        required: false
+    environment:
+      # Standard: mitgelieferte db (Service-Name "db"). Für eine entfernte DB
+      # einfach DATABASE_URL in .env setzen — db-config.js bevorzugt sie dann.
+      DATABASE_URL: ${DATABASE_URL:-}
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-notes_app}
+      DB_USER: ${DB_USER:-notes_app}
+      DB_PASS: ${DB_PASS}
+      BIND_HOST: 0.0.0.0
+      PORT: 3000
+      # Hinter HTTPS/Tunnel auf 1 setzen (Secure-Cookies + HSTS).
+      COOKIE_SECURE: ${COOKIE_SECURE:-0}
+      # Erst-Admin (nur beim ersten Start nötig; danach egal).
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASS: ${ADMIN_PASS:-}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - office-cache:/app/cache
+      - snapshots:/app/snapshots
+
+  # Optional: App per Cloudflare-Tunnel veröffentlichen (kein offener Port nötig).
+  #   docker compose --profile tunnel-web up -d
+  cloudflared-web:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      - app
+    profiles: ["tunnel-web"]
+
+  # Optional: Verbindung zu einer ENTFERNTEN PostgreSQL über einen Cloudflare-Tunnel.
+  #   In .env: DATABASE_URL=postgres://USER:PASS@db-tunnel:5432/DBNAME  +  DB_TUNNEL_HOSTNAME=db.example.com
+  #   docker compose --profile tunnel-db up -d
+  db-tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: access tcp --hostname ${DB_TUNNEL_HOSTNAME:-} --url 0.0.0.0:5432
+    profiles: ["tunnel-db"]
+
+volumes:
+  pgdata:
+  office-cache:
+  snapshots:

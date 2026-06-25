@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Anmelden — Notizen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #FAFAF7;
+    --surface: #FFFFFF;
+    --border: #E6E2DA;
+    --text: #1A1815;
+    --text-muted: #6C6862;
+    --accent: #B8451F;
+    --accent-text: #8A2F12;
+    --danger: #C2410C;
+    --danger-soft: #FBE7D6;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0E0D0B;
+      --surface: #1A1815;
+      --border: #2A2622;
+      --text: #EDE7DC;
+      --text-muted: #9C968B;
+      --accent: #F08A4B;
+      --accent-text: #F5B084;
+      --danger: #FB923C;
+      --danger-soft: #3A1A0B;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: "DM Sans", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 4px 16px rgba(20, 18, 14, 0.06), 0 1px 2px rgba(20, 18, 14, 0.04);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .brand-mark {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    color: white;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 18px;
+  }
+  .brand-name { font-weight: 600; font-size: 16px; }
+  .brand-sub { font-size: 12px; color: var(--text-muted); }
+  h1 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  .field { margin-bottom: 14px; }
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+  }
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+  button[type="submit"] {
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px;
+    background: var(--accent);
+    color: white;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: filter 120ms ease;
+  }
+  button[type="submit"]:hover { filter: brightness(1.05); }
+  button[type="submit"]:disabled { opacity: 0.6; cursor: not-allowed; }
+  .err {
+    background: var(--danger-soft);
+    color: var(--danger);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+  .foot {
+    margin-top: 18px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <form class="card" id="login-form">
+    <div class="brand">
+      <div class="brand-mark">N</div>
+      <div>
+        <div class="brand-name">Notizen</div>
+        <div class="brand-sub">IT · Allgemein</div>
+      </div>
+    </div>
+    <h1>Anmelden</h1>
+    <div class="subtitle">Gib deine Zugangsdaten ein, um auf deine Notizen zuzugreifen.</div>
+    <div id="err" class="err" style="display:none"></div>
+    <div class="field">
+      <label for="email">E-Mail</label>
+      <input id="email" name="email" type="email" required autocomplete="username" autofocus />
+    </div>
+    <div class="field">
+      <label for="password">Passwort</label>
+      <input id="password" name="password" type="password" required autocomplete="current-password" />
+    </div>
+    <button type="submit" id="submit-btn">Anmelden</button>
+    <div class="foot">Sicher gespeichert — Notizen sind nur für dich sichtbar.</div>
+  </form>
+
+  <script>
+    const form = document.getElementById("login-form");
+    const errBox = document.getElementById("err");
+    const btn = document.getElementById("submit-btn");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errBox.style.display = "none";
+      btn.disabled = true;
+      btn.textContent = "Bitte warten…";
+      try {
+        const r = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({
+            email: document.getElementById("email").value.trim(),
+            password: document.getElementById("password").value,
+          }),
+        });
+        if (r.ok) {
+          window.location.href = "/";
+          return;
+        }
+        const data = await r.json().catch(() => ({}));
+        errBox.textContent = data.error === "invalid credentials"
+          ? "E-Mail oder Passwort falsch."
+          : "Anmeldung fehlgeschlagen.";
+        errBox.style.display = "block";
+      } catch (err) {
+        errBox.textContent = "Verbindung zum Server fehlgeschlagen.";
+        errBox.style.display = "block";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Anmelden";
+      }
+    });
+  </script>
+</body>
+</html>

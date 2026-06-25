@@ -1,0 +1,47 @@
+{
+  "name": "notizen-desktop",
+  "productName": "Notizen",
+  "version": "1.0.0",
+  "description": "Notizen — Desktop-App (Local-First). Startet den Notizen-Server lokal und verbindet deine eigene Datenbank.",
+  "main": "main.js",
+  "author": "Nils Engeli",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux",
+    "dist:mac": "electron-builder --mac"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "dev.nilsengeli.notizen",
+    "productName": "Notizen",
+    "files": ["main.js", "preload.js", "build/**"],
+    "extraResources": [
+      {
+        "from": "../app",
+        "to": "app",
+        "filter": [
+          "**/*",
+          "!.env",
+          "!db-connection.json",
+          "!dev-data.json",
+          "!dev-server.js",
+          "!snapshots/**",
+          "!cache/**",
+          "!public/cache/**",
+          "!*.service"
+        ]
+      },
+      { "from": "../deploy/schema.sql", "to": "deploy/schema.sql" }
+    ],
+    "win":   { "target": ["nsis", "portable"], "icon": "build/icon.ico" },
+    "linux": { "target": ["AppImage", "deb"], "icon": "build/icon.png", "category": "Office" },
+    "mac":   { "target": ["dmg"], "icon": "build/icon.icns", "category": "public.app-category.productivity" },
+    "nsis":  { "oneClick": false, "allowToChangeInstallationDirectory": true, "perMachine": false }
+  }
+}

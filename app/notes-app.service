@@ -1,0 +1,22 @@
+[Unit]
+Description=Notes App (Express)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=notesapp
+Group=notesapp
+WorkingDirectory=/opt/notes-app
+EnvironmentFile=/etc/notes-app/env
+ExecStart=/usr/bin/node /opt/notes-app/server.js
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/notes-app
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

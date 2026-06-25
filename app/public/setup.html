@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Einrichtung — Notizen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #FAFAF7; --surface: #FFFFFF; --surface-2: #F4F2EE; --border: #E6E2DA;
+    --text: #1A1815; --text-muted: #6C6862; --accent: #B8451F; --accent-text: #8A2F12;
+    --danger: #C2410C; --danger-soft: #FBE7D6; --ok: #15803D; --ok-soft: #DCFCE7;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0E0D0B; --surface: #1A1815; --surface-2: #211E1A; --border: #2A2622;
+      --text: #EDE7DC; --text-muted: #9C968B; --accent: #F08A4B; --accent-text: #F5B084;
+      --danger: #FB923C; --danger-soft: #3A1A0B; --ok: #4ADE80; --ok-soft: #102A18;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100%; }
+  body {
+    font-family: "DM Sans", system-ui, sans-serif; background: var(--bg); color: var(--text);
+    display: grid; place-items: center; padding: 24px; -webkit-font-smoothing: antialiased;
+  }
+  .card {
+    width: 100%; max-width: 460px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 30px;
+    box-shadow: 0 4px 16px rgba(20,18,14,.06), 0 1px 2px rgba(20,18,14,.04);
+  }
+  .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+  .brand-mark { width: 36px; height: 36px; background: var(--accent); color: #fff; border-radius: 8px;
+    display: grid; place-items: center; font-weight: 700; font-size: 18px; }
+  .brand-name { font-weight: 600; font-size: 16px; }
+  .brand-sub { font-size: 12px; color: var(--text-muted); }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 6px; }
+  .subtitle { color: var(--text-muted); font-size: 13px; margin-bottom: 20px; }
+  h2 { font-size: 13px; font-weight: 600; margin: 22px 0 12px; padding-top: 18px; border-top: 1px solid var(--border); }
+  h2:first-of-type { border-top: none; padding-top: 0; }
+  .field { margin-bottom: 12px; }
+  .row { display: flex; gap: 10px; }
+  .row .field { flex: 1; }
+  label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; }
+  input {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--border); background: var(--bg);
+    color: var(--text); border-radius: 8px; font-family: inherit; font-size: 14px; outline: none;
+    transition: border-color 120ms, box-shadow 120ms;
+  }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+  .seg { display: flex; gap: 4px; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 9px; padding: 3px; margin-bottom: 14px; }
+  .seg button { flex: 1; padding: 7px; border: none; background: transparent; color: var(--text-muted);
+    border-radius: 6px; font: inherit; font-size: 13px; cursor: pointer; }
+  .seg button.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+  .check input { width: auto; }
+  .btns { display: flex; gap: 10px; margin-top: 6px; }
+  button.primary, button.ghost {
+    flex: 1; padding: 10px; border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: filter 120ms, background 120ms;
+  }
+  button.primary { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+  button.primary:hover { filter: brightness(1.05); }
+  button.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  button.ghost:hover { background: var(--surface-2); }
+  button:disabled { opacity: .6; cursor: not-allowed; }
+  .msg { padding: 9px 12px; border-radius: 8px; font-size: 13px; margin: 12px 0; display: none; }
+  .msg.err { background: var(--danger-soft); color: var(--danger); display: block; }
+  .msg.ok  { background: var(--ok-soft); color: var(--ok); display: block; }
+  details.info { margin-top: 18px; font-size: 13px; color: var(--text-muted); }
+  details.info summary { cursor: pointer; font-weight: 500; color: var(--text); }
+  details.info code, details.info pre {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 2px 6px; font-size: 12px; display: inline-block;
+  }
+  details.info pre { display: block; padding: 10px; white-space: pre-wrap; margin: 8px 0; }
+  .hint { font-size: 11.5px; color: var(--text-muted); margin-top: -6px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+  <form class="card" id="setup-form" autocomplete="off">
+    <div class="brand">
+      <div class="brand-mark">N</div>
+      <div>
+        <div class="brand-name">Notizen</div>
+        <div class="brand-sub">Ersteinrichtung</div>
+      </div>
+    </div>
+    <h1>Mit deiner Datenbank verbinden</h1>
+    <div class="subtitle">Diese App speichert deine Notizen in deiner eigenen PostgreSQL-Datenbank. Verbinde sie einmalig — danach geht's direkt los.</div>
+
+    <div id="msg" class="msg"></div>
+
+    <h2>1 · Datenbank</h2>
+    <div class="seg" id="mode">
+      <button type="button" data-mode="fields" class="active">Einzelwerte</button>
+      <button type="button" data-mode="url">Connection-String</button>
+    </div>
+
+    <div id="fields-mode">
+      <div class="row">
+        <div class="field" style="flex:2"><label for="host">Host</label><input id="host" value="127.0.0.1" /></div>
+        <div class="field"><label for="port">Port</label><input id="port" value="5432" /></div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="name">Datenbank</label><input id="name" value="notes_app" /></div>
+        <div class="field"><label for="user">Benutzer</label><input id="user" value="notes_app" /></div>
+      </div>
+      <div class="field"><label for="pass">Passwort</label><input id="pass" type="password" /></div>
+      <label class="check"><input type="checkbox" id="ssl" /> SSL/TLS erzwingen (für Cloud-DBs)</label>
+    </div>
+
+    <div id="url-mode" style="display:none">
+      <div class="field">
+        <label for="url">DATABASE_URL</label>
+        <input id="url" placeholder="postgres://user:pass@host:5432/notes_app" />
+      </div>
+      <div class="hint">Praktisch für gehostete/Cloud-Datenbanken oder einen Cloudflare-Tunnel (127.0.0.1).</div>
+    </div>
+
+    <div class="field" id="token-field" style="display:none">
+      <label for="token">Setup-Token</label>
+      <input id="token" placeholder="aus der Server-Konsole" />
+      <div class="hint">Wird verlangt, weil der Server von aussen erreichbar ist.</div>
+    </div>
+
+    <h2>2 · Dein Login</h2>
+    <div class="hint" id="admin-hint">Wird beim ersten Mal angelegt. Existiert in der DB schon ein Konto, kannst du das hier leer lassen.</div>
+    <div class="row">
+      <div class="field"><label for="adminEmail">E-Mail</label><input id="adminEmail" type="email" autocomplete="off" /></div>
+      <div class="field"><label for="adminPass">Passwort (min. 8)</label><input id="adminPass" type="password" autocomplete="new-password" /></div>
+    </div>
+
+    <div class="btns">
+      <button type="button" class="ghost" id="test-btn">Verbindung testen</button>
+      <button type="submit" class="primary" id="save-btn">Speichern &amp; einrichten</button>
+    </div>
+
+    <details class="info">
+      <summary>Noch keine Datenbank? Lokale DB einrichten</summary>
+      <p>Du brauchst eine laufende PostgreSQL. Schnellste Wege:</p>
+      <p><b>Windows (ein Skript, richtet alles ein + Autostart):</b></p>
+      <pre>powershell -ExecutionPolicy Bypass -File local\setup-local.ps1</pre>
+      <p><b>Docker (DB + App in einem):</b></p>
+      <pre>cp .env.docker.example .env  &amp;&amp;  docker compose up -d</pre>
+      <p>Ein echtes <i>Ein-Klick „lokale DB automatisch"</i> direkt aus diesem Fenster kommt mit der Desktop-App (Electron) — dort kann die App selbst eine eingebettete PostgreSQL starten. Bis dahin einen der Wege oben nutzen und hier oben verbinden.</p>
+    </details>
+  </form>
+
+<script>
+  var mode = "fields";
+  var msg = document.getElementById("msg");
+  var saveBtn = document.getElementById("save-btn");
+  var testBtn = document.getElementById("test-btn");
+
+  function setMsg(text, kind) { msg.className = "msg " + (kind || ""); msg.textContent = text || ""; if (!text) msg.style.display = "none"; }
+  function val(id) { return document.getElementById(id).value.trim(); }
+
+  // Mode-Umschalter
+  document.getElementById("mode").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-mode]"); if (!b) return;
+    mode = b.dataset.mode;
+    [].forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("active", x === b); });
+    document.getElementById("fields-mode").style.display = mode === "fields" ? "" : "none";
+    document.getElementById("url-mode").style.display = mode === "url" ? "" : "none";
+  });
+
+  // Setup-Token nur zeigen, wenn der Server es verlangt
+  fetch("/api/setup/status").then(function (r) { return r.json(); }).then(function (s) {
+    if (s.configured) { window.location.href = "/"; return; }
+    if (s.tokenRequired) document.getElementById("token-field").style.display = "";
+  }).catch(function () {});
+
+  function payload() {
+    var p = mode === "url" ? { url: val("url") }
+      : { host: val("host"), port: val("port"), name: val("name"), user: val("user"),
+          pass: document.getElementById("pass").value, ssl: document.getElementById("ssl").checked };
+    var tok = val("token"); if (tok) p.token = tok;
+    return p;
+  }
+
+  testBtn.addEventListener("click", function () {
+    setMsg("Teste Verbindung …", "");
+    testBtn.disabled = true;
+    fetch("/api/setup/test", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload()) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { setMsg(d.ok ? "Verbindung erfolgreich ✓" : ("Fehlgeschlagen: " + (d.error || d.code || "unbekannt")), d.ok ? "ok" : "err"); })
+      .catch(function () { setMsg("Server nicht erreichbar.", "err"); })
+      .finally(function () { testBtn.disabled = false; });
+  });
+
+  document.getElementById("setup-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var p = payload();
+    p.adminEmail = val("adminEmail");
+    p.adminPass = document.getElementById("adminPass").value;
+    if (p.adminPass && p.adminPass.length < 8) { setMsg("Admin-Passwort braucht min. 8 Zeichen.", "err"); return; }
+    setMsg("Richte ein (Verbindung, Schema, Login) …", "");
+    saveBtn.disabled = true;
+    fetch("/api/setup/save", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(p) })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (res.ok && res.d.ok) {
+          setMsg("Fertig! Weiterleitung zum Login …", "ok");
+          setTimeout(function () { window.location.href = "/login"; }, 900);
+        } else {
+          setMsg("Fehler: " + (res.d.error || res.d.code || "unbekannt"), "err");
+          saveBtn.disabled = false;
+        }
+      })
+      .catch(function () { setMsg("Server nicht erreichbar.", "err"); saveBtn.disabled = false; });
+  });
+</script>
+</body>
+</html>

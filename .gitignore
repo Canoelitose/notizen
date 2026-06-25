@@ -1,0 +1,25 @@
+# Secrets — niemals committen
+*.env
+.env
+deploy/.env
+app/.env
+app/db-connection.json
+*credentials*.txt
+*token*.txt
+
+# Laufzeit-/Benutzerdaten
+app/snapshots/
+app/cache/
+app/public/cache/
+app/runtime-port
+app/dev-data.json
+local/notes-local-credentials.txt
+
+# Node / Build
+node_modules/
+npm-debug.log*
+desktop/dist/
+
+# OS
+.DS_Store
+Thumbs.db
