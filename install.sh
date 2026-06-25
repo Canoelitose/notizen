@@ -133,13 +133,21 @@ install_proxmox() {
   ensure_repo
   cd "$INSTALL_DIR"
 
-  say "Proxmox-Konfiguration (Enter = Vorgabe übernehmen)"
+  say "Proxmox-Konfiguration"
   [ -f deploy/.env ] || cp deploy/.env.example deploy/.env
+  echo "    Bereits belegte Container-IDs auf diesem Host:"
+  pct list 2>/dev/null | awk 'NR>1 {printf "      %s  %s\n", $1, $NF}' || true
+  echo "    -> Wähle FREIE Nummern (NICHT die oben gelisteten)."
   local web_ctid db_ctid web_ip db_ip admin_email admin_pass
-  web_ctid="$(ask 'Container-ID Web'   '104')"
-  db_ctid="$(ask  'Container-ID DB'    '105')"
-  web_ip="$(ask   'IP Web-Container'   '10.10.11.104')"
-  db_ip="$(ask    'IP DB-Container'    '10.10.11.105')"
+  web_ctid="$(ask 'Container-ID Web (frei)' '106')"
+  db_ctid="$(ask  'Container-ID DB (frei)'  '107')"
+  for _id in "$web_ctid" "$db_ctid"; do
+    if pct status "$_id" >/dev/null 2>&1; then
+      die "Container $_id existiert bereits — bitte freie IDs wählen (sonst würde dein bestehendes Setup verändert)."
+    fi
+  done
+  web_ip="$(ask   'IP Web-Container'   '10.10.11.106')"
+  db_ip="$(ask    'IP DB-Container'    '10.10.11.107')"
   admin_email="$(ask 'Admin E-Mail (dein Login)' 'admin@example.com')"
   admin_pass="$(ask_secret 'Admin Passwort (min. 8, Enter = zufällig)')"; [ -n "$admin_pass" ] || admin_pass="$(randpw)"
   ask_cloudflare
