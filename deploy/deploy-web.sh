@@ -3,7 +3,7 @@
 set -e
 
 DB_APP_PASS=$(grep '^DB_APP_PASS=' /root/notes-app/credentials.txt | cut -d= -f2)
-SESSION_SECRET=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 48)
+SESSION_SECRET=$(openssl rand -hex 24)
 
 if [ -z "$DB_APP_PASS" ]; then
   echo "DB_APP_PASS missing" >&2; exit 1

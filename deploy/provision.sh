@@ -46,11 +46,11 @@ TPL="local:vztmpl/$TEMPLATE"
 
 # ── 1. DB-LXC ────────────────────────────────────────────────────────────────
 DB_APP_PASS="$(getcred DB_APP_PASS)"
-if [ -z "$DB_APP_PASS" ]; then DB_APP_PASS="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)"; setcred DB_APP_PASS "$DB_APP_PASS"; fi
+if [ -z "$DB_APP_PASS" ]; then DB_APP_PASS="$(openssl rand -hex 16)"; setcred DB_APP_PASS "$DB_APP_PASS"; fi
 
 if ! pct status "$DB_CTID" >/dev/null 2>&1; then
   say "DB-LXC $DB_CTID erstellen"
-  DB_ROOT_PASS="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 24)"; setcred "LXC${DB_CTID}_ROOT" "$DB_ROOT_PASS"
+  DB_ROOT_PASS="$(openssl rand -hex 12)"; setcred "LXC${DB_CTID}_ROOT" "$DB_ROOT_PASS"
   pct create "$DB_CTID" "$TPL" \
     --hostname notes-db --cores 1 --memory 512 --swap 256 \
     --rootfs "$STORAGE:2" \
@@ -79,7 +79,7 @@ pct exec "$DB_CTID" -- su - postgres -c "psql -d $DB_NAME -c \"ALTER TABLE users
 # ── 2. Web-LXC ───────────────────────────────────────────────────────────────
 if ! pct status "$WEB_CTID" >/dev/null 2>&1; then
   say "Web-LXC $WEB_CTID erstellen"
-  WEB_ROOT_PASS="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 24)"; setcred "LXC${WEB_CTID}_ROOT" "$WEB_ROOT_PASS"
+  WEB_ROOT_PASS="$(openssl rand -hex 12)"; setcred "LXC${WEB_CTID}_ROOT" "$WEB_ROOT_PASS"
   pct create "$WEB_CTID" "$TPL" \
     --hostname notes-web --cores 2 --memory 1024 --swap 512 \
     --rootfs "$STORAGE:8" \

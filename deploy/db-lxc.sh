@@ -30,7 +30,7 @@ say() { echo -e "\n=== $* ==="; }
 # App-DB-Passwort generieren oder aus credentials.txt wiederverwenden
 DB_APP_PASS="$(grep '^DB_APP_PASS=' "$CRED_FILE" 2>/dev/null | tail -1 | cut -d= -f2- || true)"
 if [ -z "$DB_APP_PASS" ]; then
-  DB_APP_PASS="$(openssl rand -hex 16 2>/dev/null || tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)"
+  DB_APP_PASS="$(openssl rand -hex 16)"
   echo "DB_APP_PASS=$DB_APP_PASS" >> "$CRED_FILE"
 fi
 
@@ -41,7 +41,7 @@ TPL="local:vztmpl/$TEMPLATE"
 
 if ! pct status "$DB_CTID" >/dev/null 2>&1; then
   say "LXC $DB_CTID erstellen ($DB_HOSTNAME, $DB_IP)"
-  ROOT_PASS="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 24)"
+  ROOT_PASS="$(openssl rand -hex 12)"
   echo "LXC${DB_CTID}_ROOT=$ROOT_PASS" >> "$CRED_FILE"
   pct create "$DB_CTID" "$TPL" \
     --hostname "$DB_HOSTNAME" --cores 1 --memory 512 --swap 256 \
