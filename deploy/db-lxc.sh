@@ -56,12 +56,16 @@ fi
 say "PostgreSQL installieren"
 pct exec "$DB_CTID" -- bash -c "export DEBIAN_FRONTEND=noninteractive; apt-get update -qq; apt-get install -y -qq postgresql postgresql-contrib >/dev/null; systemctl enable --now postgresql"
 
-say "Netzwerk-Zugriff für lokale Netze erlauben (10/8, 172.16/12, 192.168/16)"
+say "Netzwerk + TLS-Verschlüsselung ERZWINGEN (nur verschlüsselte Verbindungen)"
 pct exec "$DB_CTID" -- bash -c "
   PGV=\$(ls /etc/postgresql); CONF=/etc/postgresql/\$PGV/main
   sed -i \"s/^#\\?listen_addresses.*/listen_addresses = '*'/\" \$CONF/postgresql.conf
+  sed -i \"s/^#\\?ssl[[:space:]].*/ssl = on/\" \$CONF/postgresql.conf
+  grep -q '^ssl = on' \$CONF/postgresql.conf || echo 'ssl = on' >> \$CONF/postgresql.conf
+  # bestehende unverschlüsselte 'host'-Regeln für uns entfernen, durch 'hostssl' ersetzen
+  sed -i \"/^host[[:space:]]\\+$DB_NAME[[:space:]]\\+$DB_USER/d\" \$CONF/pg_hba.conf
   for net in 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16; do
-    grep -q \"\$net\" \$CONF/pg_hba.conf || echo \"host $DB_NAME $DB_USER \$net scram-sha-256\" >> \$CONF/pg_hba.conf
+    grep -q \"hostssl $DB_NAME $DB_USER \$net\" \$CONF/pg_hba.conf || echo \"hostssl $DB_NAME $DB_USER \$net scram-sha-256\" >> \$CONF/pg_hba.conf
   done
   systemctl restart postgresql
 "
@@ -85,6 +89,7 @@ cat <<INFO
      Datenbank:  $DB_NAME
      Benutzer:   $DB_USER
      Passwort:   $DB_APP_PASS
+     >>> Haken "SSL/TLS erzwingen" SETZEN  (Verbindung ist nur verschlüsselt erlaubt)
 
   (Zugangsdaten auch gespeichert in: $CRED_FILE)
 ════════════════════════════════════════════════════════════
