@@ -180,25 +180,51 @@ EOF
   fi
 }
 
+# ── PROXMOX: nur Datenbank (für Desktop/Electron-App) ────────────────────────
+install_proxmox_db() {
+  have pct || die "Das ist kein Proxmox-Host (Befehl 'pct' fehlt). Auf dem PVE-Host ausführen."
+  ensure_repo
+  cd "$INSTALL_DIR"
+
+  say "Datenbank-Container (nur PostgreSQL) — für die Desktop-/Electron-App"
+  echo "    Die App läuft bei dir lokal; sie braucht nur diese Datenbank zum Verbinden."
+  echo "    Bereits belegte Container-IDs:"
+  pct list 2>/dev/null | awk 'NR>1 {printf "      %s  %s\n", $1, $NF}' || true
+  echo "    -> Wähle eine FREIE Nummer."
+  local ctid ip allow
+  ctid="$(ask 'Container-ID (frei)' '108')"
+  pct status "$ctid" >/dev/null 2>&1 && die "Container $ctid existiert bereits — bitte freie ID wählen."
+  ip="$(ask 'IP des DB-Containers (frei, NICHT eine Node-IP)' '10.10.11.108')"
+  allow="$(ask 'Welche Geräte dürfen verbinden? (CIDR)' "$(echo "$ip" | cut -d. -f1-3).0/24")"
+
+  say "Datenbank-LXC bauen …"
+  DB_CTID="$ctid" DB_IP="$ip" ALLOW_CIDR="$allow" bash deploy/db-lxc.sh
+}
+
 # ── Menü ─────────────────────────────────────────────────────────────────────
 main() {
   banner
   if [ -z "$MODE" ]; then
     echo "    Wie möchtest du installieren?"
-    echo -e "      ${C_B}1)${C_0} Docker   — ein Container-Stack (App + DB), überall"
-    if have pct; then echo -e "      ${C_B}2)${C_0} Proxmox  — zwei LXC (App + DB) auf diesem Host"; fi
+    echo -e "      ${C_B}1)${C_0} Docker      — ein Container-Stack (App + DB), überall"
+    if have pct; then
+      echo -e "      ${C_B}2)${C_0} Proxmox     — zwei LXC (App + DB) auf diesem Host"
+      echo -e "      ${C_B}3)${C_0} Nur DB      — ein LXC nur mit PostgreSQL (für die Desktop-App)"
+    fi
     echo
     local c; c="$(ask 'Auswahl' '1')"
     case "$c" in
       1) MODE=docker ;;
       2) MODE=proxmox ;;
+      3) MODE=db ;;
       *) die "Ungültige Auswahl" ;;
     esac
   fi
   case "$MODE" in
     docker)  install_docker ;;
     proxmox) install_proxmox ;;
-    *) die "Unbekannter Modus '$MODE' (erlaubt: docker, proxmox)" ;;
+    db)      install_proxmox_db ;;
+    *) die "Unbekannter Modus '$MODE' (erlaubt: docker, proxmox, db)" ;;
   esac
 }
 
