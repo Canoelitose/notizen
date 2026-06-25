@@ -191,14 +191,13 @@ install_proxmox_db() {
   echo "    Bereits belegte Container-IDs:"
   pct list 2>/dev/null | awk 'NR>1 {printf "      %s  %s\n", $1, $NF}' || true
   echo "    -> Wähle eine FREIE Nummer."
-  local ctid ip allow
+  local ctid ip
   ctid="$(ask 'Container-ID (frei)' '108')"
   pct status "$ctid" >/dev/null 2>&1 && die "Container $ctid existiert bereits — bitte freie ID wählen."
   ip="$(ask 'IP des DB-Containers (frei, NICHT eine Node-IP)' '10.10.11.108')"
-  allow="$(ask 'Welche Geräte dürfen verbinden? (CIDR)' "$(echo "$ip" | cut -d. -f1-3).0/24")"
 
   say "Datenbank-LXC bauen …"
-  DB_CTID="$ctid" DB_IP="$ip" ALLOW_CIDR="$allow" bash deploy/db-lxc.sh
+  DB_CTID="$ctid" DB_IP="$ip" bash deploy/db-lxc.sh
 }
 
 # ── Menü ─────────────────────────────────────────────────────────────────────

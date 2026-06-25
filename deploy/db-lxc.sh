@@ -22,8 +22,6 @@ TEMPLATE="${TEMPLATE:-debian-12-standard_12.12-1_amd64.tar.zst}"
 DB_NAME="${DB_NAME:-notes_app}"
 DB_USER="${DB_USER:-notes_app}"
 DB_HOSTNAME="${DB_HOSTNAME:-notizen-db}"
-# Wer darf sich verbinden (CIDR). Default: /24 der DB-IP. Für /23 o.a. überschreiben.
-ALLOW_CIDR="${ALLOW_CIDR:-$(echo "$DB_IP" | cut -d. -f1-3).0/24}"
 
 CRED_DIR="/root/notizen"; CRED_FILE="$CRED_DIR/credentials.txt"
 mkdir -p "$CRED_DIR"; touch "$CRED_FILE"; chmod 600 "$CRED_FILE"
@@ -32,7 +30,7 @@ say() { echo -e "\n=== $* ==="; }
 # App-DB-Passwort generieren oder aus credentials.txt wiederverwenden
 DB_APP_PASS="$(grep '^DB_APP_PASS=' "$CRED_FILE" 2>/dev/null | tail -1 | cut -d= -f2- || true)"
 if [ -z "$DB_APP_PASS" ]; then
-  DB_APP_PASS="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)"
+  DB_APP_PASS="$(openssl rand -hex 16 2>/dev/null || tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)"
   echo "DB_APP_PASS=$DB_APP_PASS" >> "$CRED_FILE"
 fi
 
@@ -58,11 +56,13 @@ fi
 say "PostgreSQL installieren"
 pct exec "$DB_CTID" -- bash -c "export DEBIAN_FRONTEND=noninteractive; apt-get update -qq; apt-get install -y -qq postgresql postgresql-contrib >/dev/null; systemctl enable --now postgresql"
 
-say "Netzwerk-Zugriff erlauben für: $ALLOW_CIDR"
+say "Netzwerk-Zugriff für lokale Netze erlauben (10/8, 172.16/12, 192.168/16)"
 pct exec "$DB_CTID" -- bash -c "
   PGV=\$(ls /etc/postgresql); CONF=/etc/postgresql/\$PGV/main
   sed -i \"s/^#\\?listen_addresses.*/listen_addresses = '*'/\" \$CONF/postgresql.conf
-  grep -q '$ALLOW_CIDR' \$CONF/pg_hba.conf || echo 'host $DB_NAME $DB_USER $ALLOW_CIDR scram-sha-256' >> \$CONF/pg_hba.conf
+  for net in 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16; do
+    grep -q \"\$net\" \$CONF/pg_hba.conf || echo \"host $DB_NAME $DB_USER \$net scram-sha-256\" >> \$CONF/pg_hba.conf
+  done
   systemctl restart postgresql
 "
 
