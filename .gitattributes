@@ -1,0 +1,4 @@
+# Shell-Skripte immer mit LF (sonst bricht bash auf Linux mit \r).
+*.sh   text eol=lf
+# Windows-Skripte mit CRLF.
+*.ps1  text eol=crlf
